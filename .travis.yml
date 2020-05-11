@@ -1,0 +1,23 @@
+language: generic
+
+services:
+  - docker
+
+before_install:
+  - docker build -t cantacoop/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true cantacoop/react-test yarn run test
+
+after_success:
+  - docker build -t cantacoop/multi-client ./client
+  - docker build -t cantacoop/multi-nginx ./nginx
+  - docker build -t cantacoop/multi-server ./server
+  - docker build -t cantacoop/multi-worker ./worker
+  # Login in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push cantacoop/multi-client
+  - docker push cantacoop/multi-nginx
+  - docker push cantacoop/multi-server
+  - docker push cantacoop/multi-worker
